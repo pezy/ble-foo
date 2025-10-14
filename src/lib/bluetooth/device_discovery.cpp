@@ -238,14 +238,14 @@ DeviceQueryResult get_paired_devices() {
   auto objects_iter_wrapper = GObjectWrapper::make_variant_iter(objects_iter);
 
   const char* object_path;
-  GVariant* interfaces_variant;
+  GVariant* interfaces_variant;  // automatically unreferenced by g_variant_iter_loop
 
   while (g_variant_iter_loop(objects_iter_wrapper.get(), "{&o@a{sa{sv}}}", &object_path, &interfaces_variant)) {
     GVariantIter interfaces_iter;
     g_variant_iter_init(&interfaces_iter, interfaces_variant);
 
     const char* interface_name;
-    GVariant* properties_variant;
+    GVariant* properties_variant;  // automatically unreferenced by g_variant_iter_loop
 
     while (g_variant_iter_loop(&interfaces_iter, "{&s@a{sv}}", &interface_name, &properties_variant)) {
       if (g_strcmp0(interface_name, "org.bluez.Device1") == 0) {
@@ -265,11 +265,7 @@ DeviceQueryResult get_paired_devices() {
           }
         }
       }
-
-      // properties_variant is automatically unreferenced by g_variant_iter_loop
     }
-
-    // interfaces_variant is automatically unreferenced by g_variant_iter_loop
   }
 
   // Set success and timing

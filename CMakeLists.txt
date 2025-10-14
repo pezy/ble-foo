@@ -67,13 +67,7 @@ endif()
 # CPPLint
 find_program(CPPLINT cpplint)
 
-if(CPPLINT)
-    set(ALL_CPP_SOURCES
-        "${CMAKE_SOURCE_DIR}/src/cli/ble_paired.cpp"
-        "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
-        "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
-    )
-    
+if(CPPLINT)    
     add_custom_target(cpplint
         COMMAND ${CPPLINT}
             --recursive

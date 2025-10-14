@@ -20,9 +20,6 @@ typedef struct _GError GError;
 
 namespace ble {
 
-// Forward declaration for internal implementation
-class BluetoothConnection;
-
 // RAII wrappers for GLib objects
 class GObjectWrapper {
  public:
