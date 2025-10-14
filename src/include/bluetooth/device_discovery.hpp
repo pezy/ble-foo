@@ -90,6 +90,9 @@ struct DeviceQueryResult {
 };
 
 // Core interface functions
-DeviceQueryResult get_paired_devices();
+DeviceQueryResult GetPairedDevices();
+
+// Error code utility function
+std::string ErrorCodeToMessage(ErrorCode code);
 
 }  // namespace ble

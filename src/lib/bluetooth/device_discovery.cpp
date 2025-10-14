@@ -134,7 +134,7 @@ std::optional<int16_t> extract_rssi(GVariant* device_dict) {
 }
 
 // Helper function to check if device is connected
-bool extract_connected(GVariant* device_dict) {
+bool ExtractConnected(GVariant* device_dict) {
   auto connected_variant =
       GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "Connected", G_VARIANT_TYPE_BOOLEAN));
   if (!connected_variant) {
@@ -144,7 +144,7 @@ bool extract_connected(GVariant* device_dict) {
   return static_cast<bool>(g_variant_get_boolean(connected_variant.get()));
 }
 
-bool extract_paired(GVariant* device_dict) {
+bool ExtractPaired(GVariant* device_dict) {
   auto paired_variant =
       GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "Paired", G_VARIANT_TYPE_BOOLEAN));
   if (!paired_variant) {
@@ -155,7 +155,7 @@ bool extract_paired(GVariant* device_dict) {
 }
 
 // Helper function to create error result
-DeviceQueryResult create_error_result(ErrorCode error_code, const std::string& error_message) {
+DeviceQueryResult CreateErrorResult(ErrorCode error_code, const std::string& error_message) {
   DeviceQueryResult result;
   result.devices.clear();
   result.success = false;
@@ -168,7 +168,7 @@ DeviceQueryResult create_error_result(ErrorCode error_code, const std::string& e
 }  // anonymous namespace
 
 // Core implementation functions
-DeviceQueryResult get_paired_devices() {
+DeviceQueryResult GetPairedDevices() {
   auto start_time = std::chrono::steady_clock::now();
 
   DeviceQueryResult result;
@@ -182,8 +182,7 @@ DeviceQueryResult get_paired_devices() {
   // Connect to system D-Bus
   GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
   if (!connection) {
-    result =
-        create_error_result(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
+    result = CreateErrorResult(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
     if (error) {
       g_error_free(error);
     }
@@ -201,8 +200,8 @@ DeviceQueryResult get_paired_devices() {
                             "org.freedesktop.DBus.ObjectManager", nullptr, &error);
 
   if (!object_manager_proxy) {
-    result = create_error_result(ErrorCode::BluetoothServiceUnavailable,
-                                 error ? error->message : "Failed to create BlueZ adapter proxy");
+    result = CreateErrorResult(ErrorCode::BluetoothServiceUnavailable,
+                               error ? error->message : "Failed to create BlueZ adapter proxy");
     if (error) g_error_free(error);
     auto end_time = std::chrono::steady_clock::now();
     result.query_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
@@ -219,8 +218,8 @@ DeviceQueryResult get_paired_devices() {
                              nullptr, &error);
 
   if (!objects_result) {
-    result = create_error_result(ErrorCode::BluetoothServiceUnavailable,
-                                 error ? error->message : "Failed to get managed objects");
+    result = CreateErrorResult(ErrorCode::BluetoothServiceUnavailable,
+                               error ? error->message : "Failed to get managed objects");
     if (error) g_error_free(error);
     auto end_time = std::chrono::steady_clock::now();
     result.query_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
@@ -257,8 +256,8 @@ DeviceQueryResult get_paired_devices() {
           device.device_name = extract_device_name(properties_variant);
           device.device_class = extract_device_class(properties_variant);
           device.rssi = extract_rssi(properties_variant);
-          device.connected = extract_connected(properties_variant);
-          bool is_paired = extract_paired(properties_variant);
+          device.connected = ExtractConnected(properties_variant);
+          bool is_paired = ExtractPaired(properties_variant);
 
           if (device.isValidMacAddress() && is_paired) {
             result.devices.push_back(device);
@@ -274,6 +273,26 @@ DeviceQueryResult get_paired_devices() {
   result.query_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
   return result;
+}
+
+// Error code utility function
+std::string ErrorCodeToMessage(ErrorCode code) {
+  switch (code) {
+    case ErrorCode::Success:
+      return "Success";
+    case ErrorCode::BluetoothServiceUnavailable:
+      return "Bluetooth service unavailable - Ensure Bluetooth is running and BlueZ service is active";
+    case ErrorCode::PermissionDenied:
+      return "Permission denied - Ensure sufficient permissions to access Bluetooth devices";
+    case ErrorCode::QueryTimeout:
+      return "Query timeout";
+    case ErrorCode::DBusConnectionFailed:
+      return "D-Bus connection failed - Ensure system D-Bus service is running";
+    case ErrorCode::UnknownError:
+      return "Unknown error";
+    default:
+      return "Undefined error code";
+  }
 }
 
 }  // namespace ble

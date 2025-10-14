@@ -10,7 +10,7 @@
 
 namespace {
 
-void print_device_info(const ble::PairedBluetoothDevice& device, bool verbose) {
+void PrintDeviceInfo(const ble::PairedBluetoothDevice& device, bool verbose) {
   if (verbose) {
     std::cout << device.mac_address;
 
@@ -28,26 +28,7 @@ void print_device_info(const ble::PairedBluetoothDevice& device, bool verbose) {
   }
 }
 
-void print_error_message(const std::string& message) { std::cerr << "Error: " << message << "\n"; }
-
-std::string error_code_to_message(ble::ErrorCode code) {
-  switch (code) {
-    case ble::ErrorCode::Success:
-      return "Success";
-    case ble::ErrorCode::BluetoothServiceUnavailable:
-      return "Bluetooth service unavailable - Ensure Bluetooth is running and BlueZ service is active";
-    case ble::ErrorCode::PermissionDenied:
-      return "Permission denied - Ensure sufficient permissions to access Bluetooth devices";
-    case ble::ErrorCode::QueryTimeout:
-      return "Query timeout";
-    case ble::ErrorCode::DBusConnectionFailed:
-      return "D-Bus connection failed - Ensure system D-Bus service is running";
-    case ble::ErrorCode::UnknownError:
-      return "Unknown error";
-    default:
-      return "Undefined error code";
-  }
-}
+void PrintErrorMessage(const std::string& message) { std::cerr << "Error: " << message << "\n"; }
 
 }  // anonymous namespace
 
@@ -81,13 +62,13 @@ int main(int argc, char* argv[]) {
   bool verbose = parser.get<bool>("--verbose");
 
   try {
-    ble::DeviceQueryResult result = ble::get_paired_devices();
+    ble::DeviceQueryResult result = ble::GetPairedDevices();
 
     if (result.hasError()) {
-      print_error_message(result.error_message);
+      PrintErrorMessage(result.error_message);
       if (result.error_code != 0) {
         ble::ErrorCode error_code = static_cast<ble::ErrorCode>(result.error_code);
-        print_error_message(error_code_to_message(error_code));
+        PrintErrorMessage(ble::ErrorCodeToMessage(error_code));
       }
       return result.error_code;
     }
@@ -106,14 +87,14 @@ int main(int argc, char* argv[]) {
     }
 
     for (const auto& device : result.devices) {
-      print_device_info(device, verbose);
+      PrintDeviceInfo(device, verbose);
     }
   } catch (const ble::BluetoothException& e) {
-    print_error_message(e.what());
-    print_error_message(error_code_to_message(e.errorCode()));
+    PrintErrorMessage(e.what());
+    PrintErrorMessage(ble::ErrorCodeToMessage(e.errorCode()));
     return static_cast<int>(e.errorCode());
   } catch (const std::exception& e) {
-    print_error_message("Program exception: " + std::string(e.what()));
+    PrintErrorMessage("Program exception: " + std::string(e.what()));
     return 1;
   }
 
