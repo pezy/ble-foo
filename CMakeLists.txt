@@ -64,17 +64,16 @@ if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
-# CPPLint (optional) - 使用自定义目标方式集成
+# CPPLint
 find_program(CPPLINT cpplint)
 
 if(CPPLINT)
-    # 收集所有源文件
-    file(GLOB_RECURSE ALL_CPP_SOURCES
-        "${CMAKE_SOURCE_DIR}/src/*.cpp"
-        "${CMAKE_SOURCE_DIR}/src/*.hpp"
+    set(ALL_CPP_SOURCES
+        "${CMAKE_SOURCE_DIR}/src/cli/ble_paired.cpp"
+        "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
+        "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
     )
     
-    # 创建 cpplint 自定义目标
     add_custom_target(cpplint
         COMMAND ${CPPLINT}
             --recursive
@@ -83,7 +82,6 @@ if(CPPLINT)
         COMMENT "Running cpplint on source files"
     )
     
-    # 创建 cpplint-fix 目标（使用 sed 输出格式）
     add_custom_target(cpplint-fix
         COMMAND ${CPPLINT}
             --recursive
@@ -104,12 +102,12 @@ endif()
 find_program(CLANG_FORMAT clang-format)
 
 if(CLANG_FORMAT)
-    file(GLOB_RECURSE ALL_SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/src/*.cpp"
-        "${CMAKE_SOURCE_DIR}/src/include/*.hpp"
-        "${CMAKE_SOURCE_DIR}/tests/*.cpp"
-        "${CMAKE_SOURCE_DIR}/tests/include/*.hpp"
+    set(ALL_SOURCE_FILES
+        "${CMAKE_SOURCE_DIR}/src/cli/ble_paired.cpp"
+        "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
+        "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
     )
+    
     add_custom_target(format
         COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES}
         COMMENT "Formatting source code with clang-format"

@@ -5,10 +5,10 @@ IMAGE := armforge
 docker:
 	@docker buildx build --platform linux/arm64 -t $(IMAGE) -f Dockerfile .
 
-sh: docker
+sh:
 	@docker run -it --rm -v $(PWD):/ws -w /ws $(IMAGE) bash
 
-build: docker
+build:
 	@docker run --rm -v $(PWD):/ws -w /ws $(IMAGE) sh -c "cmake -S . -B build && cmake --build build"
 
 deploy:
