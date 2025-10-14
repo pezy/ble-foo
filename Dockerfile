@@ -15,10 +15,11 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/r
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ros-humble-rosbag2-storage-mcap \
-        ros-humble-rmw-cyclonedds-cpp \
-        ros-humble-foxglove-bridge \
-        libbluetooth-dev \
-        libreadline-dev \
-        libglib2.0-dev && \
+    ros-humble-rosbag2-storage-mcap \
+    ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-foxglove-bridge \
+    libbluetooth-dev \
+    libreadline-dev \
+    libdbus-1-dev \
+    libglib2.0-dev && \
     rm -rf /var/lib/apt/lists/*
