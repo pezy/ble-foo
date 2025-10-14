@@ -39,3 +39,52 @@
 
 # debug information files
 *.dwo
+
+# Build outputs
+build/
+out/
+dist/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake
+
+# Compiled binary
+ble_paired
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+
+# Coverage reports
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Testing
+tests/build/
+tests/results/
+test_*

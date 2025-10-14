@@ -172,16 +172,6 @@ bluetoothctl --version
 
 ## 性能优化
 
-### 批量查询
-
-```cpp
-// 使用超时控制
-auto result = bluetooth::get_paired_devices_with_timeout(std::chrono::milliseconds(1000));
-
-// 检查查询时间
-std::cout << "Query took " << result.query_time.count() << "ms\n";
-```
-
 ### 错误处理
 
 ```cpp

@@ -1,0 +1,23 @@
+# cpplint configuration for Bluetooth Paired Device Discovery project
+# Following Google C++ Style Guide
+
+# Include paths to check
+--include_dirs=src/include
+--include_dirs=tests/include
+
+# Exclude patterns
+--exclude_files=build/
+--exclude_files=out/
+--exclude_files=dist/
+
+# Google C++ Style Guide specific settings
+--filter=-whitespace/line_length
+--filter=-runtime/references
+--filter=-runtime/int
+--filter=-build/c++11
+
+# Headers
+--headers=hg
+
+# Extensions
+--extensions=hpp,cpp,cc,c,cxx

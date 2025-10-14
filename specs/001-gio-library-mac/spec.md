@@ -75,7 +75,7 @@
 
 - **FR-001**: System MUST provide a function in `libble` to retrieve paired Bluetooth device information
 - **FR-002**: System MUST return MAC addresses for all paired Bluetooth devices
-- **FR-003**: System MUST provide a CLI executable named `ble_paired` that displays paired device MAC addresses
+- **FR-003**: System MUST provide a CLI executable named `ble_paired` that displays paired device MAC addresses with -h/--help support
 - **FR-004**: System MUST handle cases when no paired devices exist
 - **FR-005**: System MUST handle cases when Bluetooth service is unavailable
 - **FR-006**: System MUST be compilable with C++17 standard
@@ -85,6 +85,7 @@
 - **FR-010**: System MUST be deployable on Linux ARM64 platform
 - **FR-011**: System MUST support `make build` target that uses CMake to build `libble` and `ble_paired`
 - **FR-012**: System MUST use mixed code organization: resource management with classes, core logic with functions
+- **FR-013**: System MUST integrate argparse header-only library for CLI argument parsing
 
 ### Key Entities _(include if feature involves data)_
 
@@ -115,6 +116,11 @@
 - Q: Makefile 构建目标 → A: 添加 `make build` 目标，调用 CMake 构建库和 CLI 工具
 - Q: 代码组织方式 → A: 混合方式：资源管理用类，核心逻辑用函数
 - Q: 输出格式 → A: 仅支持普通文本格式，暂不实现 JSON 输出
+- Q: 构建环境 → A: 必须且仅使用 Dockerfile 进行交叉编译，不支持本地环境构建
+- Q: 代码语言规范 → A: 所有代码注释、字符串、变量名等必须使用英文，禁用中文字符
+- Q: CLI 参数复杂度 → A: 基础参数（输出格式控制、详细程度、帮助信息）
+- Q: argparse 依赖管理方式 → A: 手动下载头文件到项目中
+- Q: CLI 参数定义 → A: 仅帮助参数（-h/--help）
 
 ## Assumptions
 

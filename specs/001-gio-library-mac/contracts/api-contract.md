@@ -13,9 +13,6 @@
 namespace bluetooth {
 // 核心查询接口
 DeviceQueryResult get_paired_devices();
-
-// 带超时的查询接口
-DeviceQueryResult get_paired_devices_with_timeout(std::chrono::milliseconds timeout);
 }
 ```
 
