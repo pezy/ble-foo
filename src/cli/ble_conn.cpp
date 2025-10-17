@@ -47,41 +47,25 @@ int main(int argc, char* argv[]) {
   bool disconnect = parser.get<bool>("-d");
 
   try {
-    if (disconnect) {
-      // Disconnect device mode
-      std::cout << "Attempting to disconnect from device: " << mac_address << "\n";
+    const bool is_disconnect = disconnect;
+    const auto action_str = is_disconnect ? "disconnect from" : "connect to";
+    const auto success_str = is_disconnect ? "Successfully disconnected from" : "Successfully connected to";
+    const auto time_label = is_disconnect ? "Disconnect time" : "Connection time";
 
-      ble::Result result = ble::DisconnectDevice(mac_address);
+    std::cout << "Attempting to " << action_str << " device: " << mac_address << "\n";
+    ble::Result result = is_disconnect ? ble::DisconnectDevice(mac_address) : ble::ConnectDevice(mac_address);
 
-      if (result.hasError()) {
-        PrintErrorMessage(result.error_message);
-        if (result.error_code != 0) {
-          ble::ErrorCode error_code = static_cast<ble::ErrorCode>(result.error_code);
-          PrintErrorMessage(ble::ErrorCodeToMessage(error_code));
-        }
-        return result.error_code;
+    if (result.hasError()) {
+      PrintErrorMessage(result.error_message);
+      if (result.error_code != 0) {
+        ble::ErrorCode error_code = static_cast<ble::ErrorCode>(result.error_code);
+        PrintErrorMessage(ble::ErrorCodeToMessage(error_code));
       }
-
-      std::cout << "Successfully disconnected from device: " << mac_address << "\n";
-      std::cout << "Disconnect time: " << result.operation_time.count() << " ms\n";
-    } else {
-      // Connect device mode
-      std::cout << "Attempting to connect to device: " << mac_address << "\n";
-
-      ble::Result result = ble::ConnectDevice(mac_address);
-
-      if (result.hasError()) {
-        PrintErrorMessage(result.error_message);
-        if (result.error_code != 0) {
-          ble::ErrorCode error_code = static_cast<ble::ErrorCode>(result.error_code);
-          PrintErrorMessage(ble::ErrorCodeToMessage(error_code));
-        }
-        return result.error_code;
-      }
-
-      std::cout << "Successfully connected to device: " << mac_address << "\n";
-      std::cout << "Connection time: " << result.operation_time.count() << " ms\n";
+      return result.error_code;
     }
+
+    std::cout << success_str << " device: " << mac_address << "\n";
+    std::cout << time_label << ": " << result.operation_time.count() << " ms\n";
   } catch (const ble::BluetoothException& e) {
     PrintErrorMessage(e.what());
     PrintErrorMessage(ble::ErrorCodeToMessage(e.errorCode()));

@@ -193,6 +193,21 @@ bool IsValidMacAddress(const std::string& mac_address) {
   return true;
 }
 
+class ScopedTimer {
+ public:
+  explicit ScopedTimer(std::chrono::milliseconds& duration)
+      : start_time_(std::chrono::steady_clock::now()), duration_ref_(duration) {}
+
+  ~ScopedTimer() {
+    const auto end_time = std::chrono::steady_clock::now();
+    duration_ref_ = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time_);
+  }
+
+ private:
+  const std::chrono::steady_clock::time_point start_time_;
+  std::chrono::milliseconds& duration_ref_;
+};
+
 }  // anonymous namespace
 
 namespace ble {
@@ -263,6 +278,11 @@ DeviceQueryResult GetPairedDevices() {
 
     while (g_variant_iter_loop(&interfaces_iter, "{&s@a{sv}}", &interface_name, &properties_variant)) {
       if (g_strcmp0(interface_name, "org.bluez.Device1") == 0) {
+        bool is_paired = ExtractPaired(properties_variant);
+        if (!is_paired) {
+          continue;
+        }
+
         // Extract MAC address and create device entry
         std::string mac_address = ExtractMacAddress(properties_variant);
         if (mac_address.empty()) {
@@ -275,7 +295,6 @@ DeviceQueryResult GetPairedDevices() {
         device.device_class = ExtractDeviceClass(properties_variant);
         device.rssi = ExtractRssi(properties_variant);
         device.connected = ExtractConnected(properties_variant);
-        device.paired = ExtractPaired(properties_variant);
         result.devices.push_back(device);
       }
     }

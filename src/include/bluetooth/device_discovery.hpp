@@ -44,7 +44,6 @@ struct BluetoothDevice {
   std::optional<uint32_t> device_class;
   std::optional<int16_t> rssi;
   bool connected;
-  bool paired;
 };
 
 // Query result structure
@@ -68,21 +67,6 @@ struct Result {
 
   // Convenience methods
   bool hasError() const { return !success || error_code != 0; }
-};
-
-class ScopedTimer {
- public:
-  explicit ScopedTimer(std::chrono::milliseconds& duration)
-      : start_time_(std::chrono::steady_clock::now()), duration_ref_(duration) {}
-
-  ~ScopedTimer() {
-    const auto end_time = std::chrono::steady_clock::now();
-    duration_ref_ = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time_);
-  }
-
- private:
-  const std::chrono::steady_clock::time_point start_time_;
-  std::chrono::milliseconds& duration_ref_;
 };
 
 // Core interface functions

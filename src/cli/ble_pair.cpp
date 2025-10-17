@@ -89,7 +89,6 @@ int main(int argc, char* argv[]) {
           std::cout << "N/A ";
         }
 
-        std::cout << (device.paired ? "Paired" : "Unpaired") << " ";
         std::cout << (device.connected ? "Connected" : "Disconnected") << "\n";
       }
     } else {
