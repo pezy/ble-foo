@@ -55,7 +55,7 @@ src/
 │   └── bluetooth/
 │       └── device_discovery.cpp          ✅ Complete
 └── cli/
-    ├── ble_paired.cpp                     ✅ Complete
+    ├── ble_pair.cpp                       ✅ Complete
     └── argparse.hpp                       ✅ Available
 
 tests/
@@ -89,7 +89,7 @@ README.md                                  📋 Needs update
 | Component | Status | Description |
 |-----------|--------|-------------|
 | **Core Library** | ✅ Complete | `libble` with full GIO/BlueZ integration |
-| **CLI Tool** | ✅ Complete | `ble_paired` with argument parsing and text output |
+| **CLI Tool** | ✅ Complete | `ble_pair` with argument parsing and text output |
 | **Error Handling** | ✅ Complete | Comprehensive error codes and user-friendly messages |
 | **MAC Validation** | ✅ Complete | Format validation with regex logic |
 | **Build System** | ✅ Complete | CMake + Makefile with cross-compilation support |

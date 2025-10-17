@@ -31,7 +31,7 @@ make -C build cpplint-fix | sh
 cpplint --recursive src/
 
 # 检查特定文件
-cpplint src/cli/ble_paired.cpp
+cpplint src/cli/ble_pair.cpp
 ```
 
 ## 配置说明

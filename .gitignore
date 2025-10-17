@@ -52,7 +52,7 @@ cmake_install.cmake
 *.cmake
 
 # Compiled binary
-ble_paired
+ble_pair
 
 # Logs
 *.log
@@ -88,3 +88,5 @@ Thumbs.db
 tests/build/
 tests/results/
 test_*
+
+gattlib/

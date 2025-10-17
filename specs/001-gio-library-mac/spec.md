@@ -75,7 +75,7 @@
 
 - **FR-001**: System MUST provide a function in `libble` to retrieve paired Bluetooth device information
 - **FR-002**: System MUST return MAC addresses for all paired Bluetooth devices
-- **FR-003**: System MUST provide a CLI executable named `ble_paired` that displays paired device MAC addresses with -h/--help support
+- **FR-003**: System MUST provide a CLI executable named `ble_pair` that displays paired device MAC addresses with -h/--help support
 - **FR-004**: System MUST handle cases when no paired devices exist
 - **FR-005**: System MUST handle cases when Bluetooth service is unavailable
 - **FR-006**: System MUST be compilable with C++17 standard
@@ -83,7 +83,7 @@
 - **FR-008**: System MUST support CLI interface with stdin/args → stdout, errors → stderr
 - **FR-009**: System MUST support human-readable text output format
 - **FR-010**: System MUST be deployable on Linux ARM64 platform
-- **FR-011**: System MUST support `make build` target that uses CMake to build `libble` and `ble_paired`
+- **FR-011**: System MUST support `make build` target that uses CMake to build `libble` and `ble_pair`
 - **FR-012**: System MUST use mixed code organization: resource management with classes, core logic with functions
 - **FR-013**: System MUST integrate argparse header-only library for CLI argument parsing
 
@@ -112,7 +112,7 @@
 ### Session 2025-10-14
 
 - Q: 构建系统组织 → A: 使用 CMake 作为主构建系统，通过 Makefile 调用 CMake 命令
-- Q: 构建目标命名 → A: 库名：`libble`，CLI：`ble_paired`
+- Q: 构建目标命名 → A: 库名：`libble`，CLI：`ble_pair`
 - Q: Makefile 构建目标 → A: 添加 `make build` 目标，调用 CMake 构建库和 CLI 工具
 - Q: 代码组织方式 → A: 混合方式：资源管理用类，核心逻辑用函数
 - Q: 输出格式 → A: 仅支持普通文本格式，暂不实现 JSON 输出

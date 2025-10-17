@@ -75,7 +75,7 @@ public:
 ### 命令行格式
 
 ```bash
-ble_paired [OPTIONS]
+ble_pair [OPTIONS]
 ```
 
 ### 选项参数
