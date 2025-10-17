@@ -21,53 +21,52 @@ enum class ErrorCode {
   UnknownError = 5,
   PairingFailed = 6,
   DeviceNotFound = 7,
-  PairingTimeout = 8
+  PairingTimeout = 8,
+  ConnectionFailed = 9,
+  DisconnectFailed = 10,
+  ConnectionTimeout = 11
 };
 
 // Exception class
 class BluetoothException : public std::runtime_error {
  public:
-  BluetoothException(ErrorCode code, const std::string& message);
-  ErrorCode errorCode() const;
+  BluetoothException(ErrorCode code, const std::string& message) : std::runtime_error(message), error_code_(code) {}
+  ErrorCode errorCode() const { return error_code_; }
 
  private:
-  ErrorCode error_code_;
+  const ErrorCode error_code_;
 };
 
 // Device information structure
-struct PairedBluetoothDevice {
+struct BluetoothDevice {
   std::string mac_address;
   std::optional<std::string> device_name;
   std::optional<uint32_t> device_class;
   std::optional<int16_t> rssi;
   bool connected;
-
-  // Validation method
-  bool isValidMacAddress() const;
 };
 
 // Query result structure
 struct DeviceQueryResult {
-  std::vector<PairedBluetoothDevice> devices;
-  bool success;
-  int error_code;
-  std::string error_message;
-  std::chrono::milliseconds query_time;
+  std::vector<BluetoothDevice> devices;
+  bool success{false};
+  int error_code{0};
+  std::string error_message{""};
+  std::chrono::milliseconds query_time{0};
 
   // Convenience methods
-  bool hasError() const;
-  size_t deviceCount() const;
+  bool hasError() const { return !success || error_code != 0; }
+  size_t deviceCount() const { return devices.size(); }
 };
 
-// Pairing result structure
-struct PairResult {
-  bool success;
-  int error_code;
-  std::string error_message;
-  std::chrono::milliseconds pair_time;
+struct Result {
+  bool success{false};
+  int error_code{0};
+  std::string error_message{""};
+  std::chrono::milliseconds operation_time{0};
 
   // Convenience methods
-  bool hasError() const;
+  bool hasError() const { return !success || error_code != 0; }
 };
 
 // Core interface functions
@@ -75,7 +74,11 @@ DeviceQueryResult GetPairedDevices();
 
 bool IsDevicePaired(const std::string& mac_address);
 
-PairResult PairDevice(const std::string& mac_address, int timeout_seconds = 30);
+Result PairDevice(const std::string& mac_address, int timeout_seconds = 30);
+
+Result ConnectDevice(const std::string& mac_address, int timeout_seconds = 30);
+
+Result DisconnectDevice(const std::string& mac_address, int timeout_seconds = 10);
 
 // Error code utility function
 std::string ErrorCodeToMessage(ErrorCode code);

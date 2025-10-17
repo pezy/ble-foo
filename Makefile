@@ -12,7 +12,7 @@ build:
 	@docker run --rm -v $(PWD):/ws -w /ws $(IMAGE) sh -c "cmake -S . -B build-arm64 && cmake --build build-arm64"
 
 deploy:
-	scp build/ble_pair build/libble.so.1 build/libble.so.1.0.0 x5:/app/ble/
+	scp build/ble_pair build/ble_conn build/libble.so.1 build/libble.so.1.0.0 x5:/app/ble/
 
 b:
 	@cmake -S . -B build && cmake --build build
