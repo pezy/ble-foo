@@ -339,6 +339,10 @@ bool IsDevicePaired(const std::string& mac_address) {
 }
 
 PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
+  if (IsDevicePaired(mac_address)) {
+    return CreatePairErrorResult(ErrorCode::Success, "Device already paired");
+  }
+
   PairResult result;
   result.success = false;
   result.error_code = 0;
