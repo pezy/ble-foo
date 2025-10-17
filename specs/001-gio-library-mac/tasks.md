@@ -11,7 +11,7 @@
 **Key Information**:
 
 - **Library**: `libble` ✅ Complete
-- **CLI Tool**: `ble_paired` ✅ Complete
+- **CLI Tool**: `ble_pair` ✅ Complete
 - **Dependencies**: C++17, GIO library, argparse.hpp ✅ Integrated
 - **Target**: Linux ARM64 (cross-compile via Docker) ✅ Ready
 
@@ -55,7 +55,7 @@
 | T007 | 创建 DeviceQueryResult 结果结构，包含错误处理和时间统计 | src/include/bluetooth/device_discovery.hpp | ✅ Complete |
 | T008 | 定义错误代码枚举和 BluetoothException 异常类            | src/include/bluetooth/device_discovery.hpp | ✅ Complete |
 | T009 | 实现 GIO D-Bus 连接管理 RAII 包装类 (内部资源管理)      | src/lib/bluetooth/device_discovery.cpp     | ✅ Complete |
-| T010 | 配置构建目标：libble 共享库和 ble_paired CLI 可执行文件 | CMakeLists.txt                             | ✅ Complete |
+| T010 | 配置构建目标：libble 共享库和 ble_pair CLI 可执行文件 | CMakeLists.txt                             | ✅ Complete |
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -74,10 +74,10 @@
 | T011 | 实现 MAC 地址格式验证函数 (正则表达式)          | src/lib/bluetooth/device_discovery.cpp | US1   | ✅ Complete |
 | T012 | 实现 BlueZ 设备查询核心逻辑函数                 | src/lib/bluetooth/device_discovery.cpp | US1   | ✅ Complete |
 | T013 | 实现 bluetooth::get_paired_devices() 函数式接口 | src/lib/bluetooth/device_discovery.cpp | US1   | ✅ Complete |
-| T014 | 使用 argparse.hpp 实现 CLI 参数解析             | src/cli/ble_paired.cpp                 | US1   | ✅ Complete |
-| T015 | 实现 CLI 主程序逻辑和纯文本输出格式化           | src/cli/ble_paired.cpp                 | US1   | ✅ Complete |
-| T016 | 添加 CLI 错误处理和用户友好的错误信息           | src/cli/ble_paired.cpp                 | US1   | ✅ Complete |
-| T017 | 添加查询超时控制机制 (默认 5000ms)              | src/cli/ble_paired.cpp                 | US1   | ✅ Complete |
+| T014 | 使用 argparse.hpp 实现 CLI 参数解析             | src/cli/ble_pair.cpp                 | US1   | ✅ Complete |
+| T015 | 实现 CLI 主程序逻辑和纯文本输出格式化           | src/cli/ble_pair.cpp                 | US1   | ✅ Complete |
+| T016 | 添加 CLI 错误处理和用户友好的错误信息           | src/cli/ble_pair.cpp                 | US1   | ✅ Complete |
+| T017 | 添加查询超时控制机制 (默认 5000ms)              | src/cli/ble_pair.cpp                 | US1   | ✅ Complete |
 | T018 | 验证库和 CLI 工具编译和基本功能测试             | build/                                 | US1   | ✅ Complete |
 
 **Checkpoint**: User Story 1 功能完整实现并可独立测试
@@ -124,7 +124,7 @@
 ### ✅ What's Done (MVP Ready)
 
 - **完整的核心库**: `libble` 支持 BlueZ D-Bus API 集成
-- **功能完整的 CLI**: `ble_paired` 支持参数解析、详细输出、错误处理
+- **功能完整的 CLI**: `ble_pair` 支持参数解析、详细输出、错误处理
 - **构建系统**: CMake + Makefile 支持交叉编译
 - **代码质量**: Google C++ Style Guide 合规
 
@@ -185,7 +185,7 @@ graph TD
 - ✅ 基本设备发现功能
 - ✅ 支持纯文本输出的 CLI 工具
 - ✅ 核心错误处理
-- ✅ `./ble_paired` 输出 MAC 地址列表
+- ✅ `./ble_pair` 输出 MAC 地址列表
 - ✅ 处理基本错误情况
 - ✅ 交叉编译到 ARM64
 

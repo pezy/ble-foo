@@ -78,8 +78,8 @@ g++ -std=c++17 \
     -I../src/include \
     $(pkg-config --cflags gio-2.0) \
     -L. -lble \
-    ../src/cli/ble_paired.cpp \
-    -o ble_paired
+    ../src/cli/ble_pair.cpp \
+    -o ble_pair
 ```
 
 ## 使用方法
@@ -88,13 +88,13 @@ g++ -std=c++17 \
 
 ```bash
 # 基本查询
-./ble_paired
+./ble_pair
 
 # 自定义超时
-./ble_paired --timeout 3000
+./ble_pair --timeout 3000
 
 # 详细输出
-./ble_paired --verbose
+./ble_pair --verbose
 ```
 
 ### C++ 库集成
@@ -147,7 +147,7 @@ sudo usermod -a -G bluetooth $USER
 # 重新登录生效
 
 # 或者使用 sudo 运行
-sudo ./ble_paired
+sudo ./ble_pair
 ```
 
 ### D-Bus 连接问题
@@ -199,7 +199,7 @@ switch (static_cast<bluetooth::ErrorCode>(result.error_code)) {
 
 ```bash
 # 启用详细日志
-./ble_paired --verbose
+./ble_pair --verbose
 
 # 检查系统日志
 journalctl -u bluetooth -f

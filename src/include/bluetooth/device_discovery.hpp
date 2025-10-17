@@ -51,7 +51,10 @@ enum class ErrorCode {
   PermissionDenied = 2,
   QueryTimeout = 3,
   DBusConnectionFailed = 4,
-  UnknownError = 5
+  UnknownError = 5,
+  PairingFailed = 6,
+  DeviceNotFound = 7,
+  PairingTimeout = 8
 };
 
 // Exception class
@@ -89,8 +92,23 @@ struct DeviceQueryResult {
   size_t deviceCount() const;
 };
 
+// Pairing result structure
+struct PairResult {
+  bool success;
+  int error_code;
+  std::string error_message;
+  std::chrono::milliseconds pair_time;
+
+  // Convenience methods
+  bool hasError() const;
+};
+
 // Core interface functions
 DeviceQueryResult GetPairedDevices();
+
+bool IsDevicePaired(const std::string& mac_address);
+
+PairResult PairDevice(const std::string& mac_address, int timeout_seconds = 30);
 
 // Error code utility function
 std::string ErrorCodeToMessage(ErrorCode code);

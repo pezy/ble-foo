@@ -48,12 +48,12 @@ set_target_properties(ble PROPERTIES
 )
 
 # Build CLI executable
-add_executable(ble_paired src/cli/ble_paired.cpp)
-target_link_libraries(ble_paired ble)
+add_executable(ble_pair src/cli/ble_pair.cpp)
+target_link_libraries(ble_pair ble)
 
 # Installation
 install(TARGETS ble DESTINATION lib)
-install(TARGETS ble_paired DESTINATION bin)
+install(TARGETS ble_pair DESTINATION bin)
 install(FILES src/include/bluetooth/device_discovery.hpp DESTINATION include/bluetooth)
 
 # Testing (optional)
@@ -67,24 +67,24 @@ endif()
 # CPPLint
 find_program(CPPLINT cpplint)
 
-if(CPPLINT)    
+if(CPPLINT)
     add_custom_target(cpplint
         COMMAND ${CPPLINT}
-            --recursive
-            ${CMAKE_SOURCE_DIR}/src
+        --recursive
+        ${CMAKE_SOURCE_DIR}/src
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running cpplint on source files"
     )
-    
+
     add_custom_target(cpplint-fix
         COMMAND ${CPPLINT}
-            --recursive
-            --output=sed
-            ${CMAKE_SOURCE_DIR}/src
+        --recursive
+        --output=sed
+        ${CMAKE_SOURCE_DIR}/src
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Generating cpplint fixes (run with: make cpplint-fix | sh)"
     )
-    
+
     message(STATUS "cpplint found: ${CPPLINT}")
     message(STATUS "Use 'make cpplint' to run code style checks")
     message(STATUS "Use 'make cpplint-fix | sh' to apply automatic fixes")
@@ -97,11 +97,11 @@ find_program(CLANG_FORMAT clang-format)
 
 if(CLANG_FORMAT)
     set(ALL_SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/src/cli/ble_paired.cpp"
+        "${CMAKE_SOURCE_DIR}/src/cli/ble_pair.cpp"
         "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
         "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
     )
-    
+
     add_custom_target(format
         COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES}
         COMMENT "Formatting source code with clang-format"

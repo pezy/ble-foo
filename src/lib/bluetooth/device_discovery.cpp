@@ -7,9 +7,6 @@
 #include <algorithm>
 #include <bluetooth/device_discovery.hpp>
 #include <cstring>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <stdexcept>
 
 namespace ble {
@@ -87,6 +84,9 @@ bool DeviceQueryResult::hasError() const { return !success || error_code != 0; }
 
 size_t DeviceQueryResult::deviceCount() const { return devices.size(); }
 
+// PairResult implementation
+bool PairResult::hasError() const { return !success || error_code != 0; }
+
 namespace {
 
 // Helper function to convert GVariant to MAC address string
@@ -163,6 +163,29 @@ DeviceQueryResult CreateErrorResult(ErrorCode error_code, const std::string& err
   result.error_message = error_message;
   result.query_time = std::chrono::milliseconds(0);
   return result;
+}
+
+// Helper function to create pair error result
+PairResult CreatePairErrorResult(ErrorCode error_code, const std::string& error_message) {
+  PairResult result;
+  result.success = false;
+  result.error_code = static_cast<int>(error_code);
+  result.error_message = error_message;
+  result.pair_time = std::chrono::milliseconds(0);
+  return result;
+}
+
+// Helper function to convert MAC address to D-Bus object path
+std::string mac_to_object_path(const std::string& mac_address) {
+  std::string path = "/org/bluez/hci0/dev_";
+  for (char c : mac_address) {
+    if (c == ':') {
+      path += '_';
+    } else {
+      path += std::toupper(c);
+    }
+  }
+  return path;
 }
 
 }  // anonymous namespace
@@ -275,6 +298,101 @@ DeviceQueryResult GetPairedDevices() {
   return result;
 }
 
+bool IsDevicePaired(const std::string& mac_address) {
+  auto result = GetPairedDevices();
+  if (result.hasError()) {
+    return false;
+  }
+  return std::find_if(result.devices.begin(), result.devices.end(), [mac_address](const PairedBluetoothDevice& device) {
+           return device.mac_address == mac_address;
+         }) != result.devices.end();
+}
+
+PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
+  auto start_time = std::chrono::steady_clock::now();
+
+  PairResult result;
+  result.success = false;
+  result.error_code = 0;
+  result.error_message = "";
+
+  // Validate MAC address format
+  PairedBluetoothDevice temp_device;
+  temp_device.mac_address = mac_address;
+  if (!temp_device.isValidMacAddress()) {
+    result = CreatePairErrorResult(ErrorCode::DeviceNotFound, "Invalid MAC address format");
+    auto end_time = std::chrono::steady_clock::now();
+    result.pair_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    return result;
+  }
+
+  GError* error = nullptr;
+
+  // Connect to system D-Bus
+  GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
+  if (!connection) {
+    result =
+        CreatePairErrorResult(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
+    if (error) {
+      g_error_free(error);
+    }
+    auto end_time = std::chrono::steady_clock::now();
+    result.pair_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    return result;
+  }
+
+  // RAII wrapper for connection
+  auto connection_wrapper = GObjectWrapper::make_dbus_connection(connection);
+
+  // Convert MAC address to D-Bus object path
+  std::string device_path = mac_to_object_path(mac_address);
+
+  // Create proxy for the specific device
+  GDBusProxy* device_proxy =
+      g_dbus_proxy_new_sync(connection_wrapper.get(), G_DBUS_PROXY_FLAGS_NONE, nullptr, "org.bluez",
+                            device_path.c_str(), "org.bluez.Device1", nullptr, &error);
+
+  if (!device_proxy) {
+    result =
+        CreatePairErrorResult(ErrorCode::DeviceNotFound, error ? error->message : "Device not found or not accessible");
+    if (error) g_error_free(error);
+    auto end_time = std::chrono::steady_clock::now();
+    result.pair_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    return result;
+  }
+
+  // RAII wrapper for device proxy
+  auto device_proxy_wrapper = GObjectWrapper::make_dbus_proxy(device_proxy);
+
+  // Call Pair method
+  GVariant* pair_result =
+      g_dbus_proxy_call_sync(device_proxy_wrapper.get(), "Pair", g_variant_new("()"), G_DBUS_CALL_FLAGS_NONE,
+                             timeout_seconds * 1000,  // Convert to milliseconds
+                             nullptr, &error);
+
+  if (!pair_result) {
+    if (error && g_error_matches(error, G_DBUS_ERROR, G_DBUS_ERROR_TIMEOUT)) {
+      result = CreatePairErrorResult(ErrorCode::PairingTimeout, "Pairing operation timed out");
+    } else {
+      result = CreatePairErrorResult(ErrorCode::PairingFailed, error ? error->message : "Pairing operation failed");
+    }
+    if (error) g_error_free(error);
+    auto end_time = std::chrono::steady_clock::now();
+    result.pair_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    return result;
+  }
+
+  // Clean up pair result
+  g_variant_unref(pair_result);
+
+  // Set success and timing
+  result.success = true;
+  auto end_time = std::chrono::steady_clock::now();
+  result.pair_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+  return result;
+}
+
 // Error code utility function
 std::string ErrorCodeToMessage(ErrorCode code) {
   switch (code) {
@@ -290,6 +408,12 @@ std::string ErrorCodeToMessage(ErrorCode code) {
       return "D-Bus connection failed - Ensure system D-Bus service is running";
     case ErrorCode::UnknownError:
       return "Unknown error";
+    case ErrorCode::PairingFailed:
+      return "Pairing failed - Device may not be in pairing mode or pairing was rejected";
+    case ErrorCode::DeviceNotFound:
+      return "Device not found - Ensure device is discoverable and within range";
+    case ErrorCode::PairingTimeout:
+      return "Pairing timeout - Device did not respond within the timeout period";
     default:
       return "Undefined error code";
   }
