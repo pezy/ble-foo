@@ -4,45 +4,12 @@
 #pragma once
 
 #include <chrono>
-#include <functional>
-#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-// Forward declarations for GLib types
-typedef struct _GDBusConnection GDBusConnection;
-typedef struct _GDBusProxy GDBusProxy;
-typedef struct _GVariant GVariant;
-typedef struct _GVariantIter GVariantIter;
-typedef struct _GError GError;
-
 namespace ble {
-
-// RAII wrappers for GLib objects
-class GObjectWrapper {
- public:
-  // GDBusConnection wrapper
-  using DBusConnection = std::unique_ptr<GDBusConnection, std::function<void(GDBusConnection*)>>;
-  static DBusConnection make_dbus_connection(GDBusConnection* conn);
-
-  // GDBusProxy wrapper
-  using DBusProxy = std::unique_ptr<GDBusProxy, std::function<void(GDBusProxy*)>>;
-  static DBusProxy make_dbus_proxy(GDBusProxy* proxy);
-
-  // GVariant wrapper
-  using Variant = std::unique_ptr<GVariant, std::function<void(GVariant*)>>;
-  static Variant make_variant(GVariant* variant);
-
-  // GVariantIter wrapper
-  using VariantIter = std::unique_ptr<GVariantIter, std::function<void(GVariantIter*)>>;
-  static VariantIter make_variant_iter(GVariantIter* iter);
-
-  // GError wrapper
-  using Error = std::unique_ptr<GError, std::function<void(GError*)>>;
-  static Error make_error(GError* error);
-};
 
 // Error codes
 enum class ErrorCode {

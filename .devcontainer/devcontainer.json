@@ -18,7 +18,8 @@
         "ms-vscode.makefile-tools",
         "ms-python.python",
         "redhat.vscode-yaml",
-        "ms-vscode.vscode-json"
+        "ms-vscode.vscode-json",
+        "kilocode.kilo-code"
       ],
       "settings": {
         "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",

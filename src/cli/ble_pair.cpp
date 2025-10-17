@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   try {
     parser.parse_args(argc, argv);
   } catch (const std::runtime_error& e) {
-    std::cerr << "Error: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << "\n";
     std::cerr << parser;
     return 1;
   }
