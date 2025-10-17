@@ -89,14 +89,14 @@ int main(int argc, char* argv[]) {
           std::cout << "N/A ";
         }
 
-        // Connection status
+        std::cout << (device.paired ? "Paired" : "Unpaired") << " ";
         std::cout << (device.connected ? "Connected" : "Disconnected") << "\n";
       }
     } else {
       // Pair device mode
       std::cout << "Attempting to pair with device: " << mac_address << "\n";
 
-      ble::PairResult result = ble::PairDevice(mac_address);
+      ble::Result result = ble::PairDevice(mac_address);
 
       if (result.hasError()) {
         PrintErrorMessage(result.error_message);
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
       }
 
       std::cout << "Successfully paired with device: " << mac_address << "\n";
-      std::cout << "Pairing time: " << result.pair_time.count() << " ms\n";
+      std::cout << "Pairing time: " << result.operation_time.count() << " ms\n";
     }
   } catch (const ble::BluetoothException& e) {
     PrintErrorMessage(e.what());

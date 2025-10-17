@@ -47,13 +47,16 @@ set_target_properties(ble PROPERTIES
     PUBLIC_HEADER "src/include/bluetooth/device_discovery.hpp"
 )
 
-# Build CLI executable
+# Build CLI executables
 add_executable(ble_pair src/cli/ble_pair.cpp)
 target_link_libraries(ble_pair ble)
 
+add_executable(ble_conn src/cli/ble_conn.cpp)
+target_link_libraries(ble_conn ble)
+
 # Installation
 install(TARGETS ble DESTINATION lib)
-install(TARGETS ble_pair DESTINATION bin)
+install(TARGETS ble_pair ble_conn DESTINATION bin)
 install(FILES src/include/bluetooth/device_discovery.hpp DESTINATION include/bluetooth)
 
 # Testing (optional)
@@ -98,6 +101,7 @@ find_program(CLANG_FORMAT clang-format)
 if(CLANG_FORMAT)
     set(ALL_SOURCE_FILES
         "${CMAKE_SOURCE_DIR}/src/cli/ble_pair.cpp"
+        "${CMAKE_SOURCE_DIR}/src/cli/ble_conn.cpp"
         "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
         "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
     )

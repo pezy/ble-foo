@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
-#include <stdexcept>
 
 // sys
 #include <gio/gio.h>
@@ -66,7 +65,7 @@ class GObjectWrapper {
 };
 
 // Helper function to convert GVariant to MAC address string
-std::string extract_mac_address(GVariant* device_dict) {
+std::string ExtractMacAddress(GVariant* device_dict) {
   auto address_variant =
       GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "Address", G_VARIANT_TYPE_STRING));
   if (!address_variant) {
@@ -78,7 +77,7 @@ std::string extract_mac_address(GVariant* device_dict) {
 }
 
 // Helper function to extract device name
-std::optional<std::string> extract_device_name(GVariant* device_dict) {
+std::optional<std::string> ExtractDeviceName(GVariant* device_dict) {
   auto name_variant = GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "Name", G_VARIANT_TYPE_STRING));
   if (!name_variant) {
     return std::nullopt;
@@ -89,7 +88,7 @@ std::optional<std::string> extract_device_name(GVariant* device_dict) {
 }
 
 // Helper function to extract device class
-std::optional<uint32_t> extract_device_class(GVariant* device_dict) {
+std::optional<uint32_t> ExtractDeviceClass(GVariant* device_dict) {
   auto class_variant =
       GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "Class", G_VARIANT_TYPE_UINT32));
   if (!class_variant) {
@@ -100,7 +99,7 @@ std::optional<uint32_t> extract_device_class(GVariant* device_dict) {
 }
 
 // Helper function to extract RSSI
-std::optional<int16_t> extract_rssi(GVariant* device_dict) {
+std::optional<int16_t> ExtractRssi(GVariant* device_dict) {
   auto rssi_variant = GObjectWrapper::make_variant(g_variant_lookup_value(device_dict, "RSSI", G_VARIANT_TYPE_INT16));
   if (!rssi_variant) {
     return std::nullopt;
@@ -142,17 +141,17 @@ ble::DeviceQueryResult CreateErrorResult(ble::ErrorCode error_code, const std::s
 }
 
 // Helper function to create pair error result
-ble::PairResult CreatePairErrorResult(ble::ErrorCode error_code, const std::string& error_message) {
-  ble::PairResult result;
+ble::Result MakeErrorResult(ble::ErrorCode error_code, const std::string& error_message) {
+  ble::Result result;
   result.success = false;
   result.error_code = static_cast<int>(error_code);
   result.error_message = error_message;
-  result.pair_time = std::chrono::milliseconds(0);
+  result.operation_time = std::chrono::milliseconds(0);
   return result;
 }
 
 // Helper function to convert MAC address to D-Bus object path
-std::string mac_to_object_path(const std::string& mac_address) {
+std::string MacToObjectPath(const std::string& mac_address) {
   std::string path = "/org/bluez/hci0/dev_";
   for (char c : mac_address) {
     if (c == ':') {
@@ -164,33 +163,7 @@ std::string mac_to_object_path(const std::string& mac_address) {
   return path;
 }
 
-class ScopedTimer {
- public:
-  explicit ScopedTimer(std::chrono::milliseconds& duration)
-      : start_time_(std::chrono::steady_clock::now()), duration_ref_(duration) {}
-
-  ~ScopedTimer() {
-    const auto end_time = std::chrono::steady_clock::now();
-    duration_ref_ = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time_);
-  }
-
- private:
-  const std::chrono::steady_clock::time_point start_time_;
-  std::chrono::milliseconds& duration_ref_;
-};
-
-}  // anonymous namespace
-
-namespace ble {
-
-// BluetoothException implementation
-BluetoothException::BluetoothException(ErrorCode code, const std::string& message)
-    : std::runtime_error(message), error_code_(code) {}
-
-ErrorCode BluetoothException::errorCode() const { return error_code_; }
-
-// PairedBluetoothDevice implementation
-bool PairedBluetoothDevice::isValidMacAddress() const {
+bool IsValidMacAddress(const std::string& mac_address) {
   if (mac_address.empty()) {
     return false;
   }
@@ -220,27 +193,16 @@ bool PairedBluetoothDevice::isValidMacAddress() const {
   return true;
 }
 
-// DeviceQueryResult implementation
-bool DeviceQueryResult::hasError() const { return !success || error_code != 0; }
+}  // anonymous namespace
 
-size_t DeviceQueryResult::deviceCount() const { return devices.size(); }
+namespace ble {
 
-// PairResult implementation
-bool PairResult::hasError() const { return !success || error_code != 0; }
-
-// Core implementation functions
 DeviceQueryResult GetPairedDevices() {
   DeviceQueryResult result;
-  result.devices.clear();
-  result.success = false;
-  result.error_code = 0;
-  result.error_message = "";
-
   ScopedTimer timer(result.query_time);
 
   GError* error = nullptr;
 
-  // Connect to system D-Bus
   GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
   if (!connection) {
     result = CreateErrorResult(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
@@ -250,10 +212,8 @@ DeviceQueryResult GetPairedDevices() {
     return result;
   }
 
-  // RAII wrapper for connection
   auto connection_wrapper = GObjectWrapper::make_dbus_connection(connection);
 
-  // Create proxy for BlueZ object manager
   GDBusProxy* object_manager_proxy =
       g_dbus_proxy_new_sync(connection_wrapper.get(), G_DBUS_PROXY_FLAGS_NONE, nullptr, "org.bluez", "/",
                             "org.freedesktop.DBus.ObjectManager", nullptr, &error);
@@ -304,20 +264,19 @@ DeviceQueryResult GetPairedDevices() {
     while (g_variant_iter_loop(&interfaces_iter, "{&s@a{sv}}", &interface_name, &properties_variant)) {
       if (g_strcmp0(interface_name, "org.bluez.Device1") == 0) {
         // Extract MAC address and create device entry
-        std::string mac_address = extract_mac_address(properties_variant);
-        if (!mac_address.empty()) {
-          PairedBluetoothDevice device;
-          device.mac_address = mac_address;
-          device.device_name = extract_device_name(properties_variant);
-          device.device_class = extract_device_class(properties_variant);
-          device.rssi = extract_rssi(properties_variant);
-          device.connected = ExtractConnected(properties_variant);
-          bool is_paired = ExtractPaired(properties_variant);
-
-          if (device.isValidMacAddress() && is_paired) {
-            result.devices.push_back(device);
-          }
+        std::string mac_address = ExtractMacAddress(properties_variant);
+        if (mac_address.empty()) {
+          continue;
         }
+
+        BluetoothDevice device;
+        device.mac_address = mac_address;
+        device.device_name = ExtractDeviceName(properties_variant);
+        device.device_class = ExtractDeviceClass(properties_variant);
+        device.rssi = ExtractRssi(properties_variant);
+        device.connected = ExtractConnected(properties_variant);
+        device.paired = ExtractPaired(properties_variant);
+        result.devices.push_back(device);
       }
     }
   }
@@ -333,28 +292,21 @@ bool IsDevicePaired(const std::string& mac_address) {
   if (result.hasError()) {
     return false;
   }
-  return std::find_if(result.devices.begin(), result.devices.end(), [mac_address](const PairedBluetoothDevice& device) {
+  return std::find_if(result.devices.begin(), result.devices.end(), [mac_address](const BluetoothDevice& device) {
            return device.mac_address == mac_address;
          }) != result.devices.end();
 }
 
-PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
+Result PairDevice(const std::string& mac_address, int timeout_seconds) {
   if (IsDevicePaired(mac_address)) {
-    return CreatePairErrorResult(ErrorCode::Success, "Device already paired");
+    return MakeErrorResult(ErrorCode::Success, "Device already paired");
   }
 
-  PairResult result;
-  result.success = false;
-  result.error_code = 0;
-  result.error_message = "";
+  Result result;
+  ScopedTimer timer(result.operation_time);
 
-  ScopedTimer timer(result.pair_time);
-
-  // Validate MAC address format
-  PairedBluetoothDevice temp_device;
-  temp_device.mac_address = mac_address;
-  if (!temp_device.isValidMacAddress()) {
-    result = CreatePairErrorResult(ErrorCode::DeviceNotFound, "Invalid MAC address format");
+  if (!IsValidMacAddress(mac_address)) {
+    result = MakeErrorResult(ErrorCode::DeviceNotFound, "Invalid MAC address format");
     return result;
   }
 
@@ -363,8 +315,7 @@ PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
   // Connect to system D-Bus
   GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
   if (!connection) {
-    result =
-        CreatePairErrorResult(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
+    result = MakeErrorResult(ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
     if (error) {
       g_error_free(error);
     }
@@ -375,7 +326,7 @@ PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
   auto connection_wrapper = GObjectWrapper::make_dbus_connection(connection);
 
   // Convert MAC address to D-Bus object path
-  std::string device_path = mac_to_object_path(mac_address);
+  std::string device_path = MacToObjectPath(mac_address);
 
   // Create proxy for the specific device
   GDBusProxy* device_proxy =
@@ -383,8 +334,7 @@ PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
                             device_path.c_str(), "org.bluez.Device1", nullptr, &error);
 
   if (!device_proxy) {
-    result =
-        CreatePairErrorResult(ErrorCode::DeviceNotFound, error ? error->message : "Device not found or not accessible");
+    result = MakeErrorResult(ErrorCode::DeviceNotFound, error ? error->message : "Device not found or not accessible");
     if (error) g_error_free(error);
     return result;
   }
@@ -400,9 +350,9 @@ PairResult PairDevice(const std::string& mac_address, int timeout_seconds) {
 
   if (!pair_result) {
     if (error && g_error_matches(error, G_DBUS_ERROR, G_DBUS_ERROR_TIMEOUT)) {
-      result = CreatePairErrorResult(ErrorCode::PairingTimeout, "Pairing operation timed out");
+      result = MakeErrorResult(ErrorCode::PairingTimeout, "Pairing operation timed out");
     } else {
-      result = CreatePairErrorResult(ErrorCode::PairingFailed, error ? error->message : "Pairing operation failed");
+      result = MakeErrorResult(ErrorCode::PairingFailed, error ? error->message : "Pairing operation failed");
     }
     if (error) g_error_free(error);
     return result;
@@ -438,9 +388,149 @@ std::string ErrorCodeToMessage(ErrorCode code) {
       return "Device not found - Ensure device is discoverable and within range";
     case ErrorCode::PairingTimeout:
       return "Pairing timeout - Device did not respond within the timeout period";
+    case ErrorCode::ConnectionFailed:
+      return "Connection failed - Device may not be available or connection was rejected";
+    case ErrorCode::DisconnectFailed:
+      return "Disconnect failed - Unable to disconnect from device";
+    case ErrorCode::ConnectionTimeout:
+      return "Connection timeout - Device did not respond within the timeout period";
     default:
       return "Undefined error code";
   }
+}
+
+ble::Result ConnectDevice(const std::string& mac_address, int timeout_seconds) {
+  ble::Result result;
+  ScopedTimer timer(result.operation_time);
+
+  if (!IsValidMacAddress(mac_address)) {
+    result = MakeErrorResult(ble::ErrorCode::DeviceNotFound, "Invalid MAC address format");
+    return result;
+  }
+
+  GError* error = nullptr;
+
+  // Connect to system D-Bus
+  GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
+  if (!connection) {
+    result =
+        MakeErrorResult(ble::ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
+    if (error) {
+      g_error_free(error);
+    }
+    return result;
+  }
+
+  // RAII wrapper for connection
+  auto connection_wrapper = GObjectWrapper::make_dbus_connection(connection);
+
+  // Convert MAC address to D-Bus object path
+  std::string device_path = MacToObjectPath(mac_address);
+
+  // Create proxy for the specific device
+  GDBusProxy* device_proxy =
+      g_dbus_proxy_new_sync(connection_wrapper.get(), G_DBUS_PROXY_FLAGS_NONE, nullptr, "org.bluez",
+                            device_path.c_str(), "org.bluez.Device1", nullptr, &error);
+
+  if (!device_proxy) {
+    result =
+        MakeErrorResult(ble::ErrorCode::DeviceNotFound, error ? error->message : "Device not found or not accessible");
+    if (error) g_error_free(error);
+    return result;
+  }
+
+  // RAII wrapper for device proxy
+  auto device_proxy_wrapper = GObjectWrapper::make_dbus_proxy(device_proxy);
+
+  // Call Connect method
+  GVariant* connect_result =
+      g_dbus_proxy_call_sync(device_proxy_wrapper.get(), "Connect", g_variant_new("()"), G_DBUS_CALL_FLAGS_NONE,
+                             timeout_seconds * 1000,  // Convert to milliseconds
+                             nullptr, &error);
+
+  if (!connect_result) {
+    if (error && g_error_matches(error, G_DBUS_ERROR, G_DBUS_ERROR_TIMEOUT)) {
+      result = MakeErrorResult(ble::ErrorCode::ConnectionTimeout, "Connection operation timed out");
+    } else {
+      result =
+          MakeErrorResult(ble::ErrorCode::ConnectionFailed, error ? error->message : "Connection operation failed");
+    }
+    if (error) g_error_free(error);
+    return result;
+  }
+
+  // Clean up connect result
+  g_variant_unref(connect_result);
+
+  // Set success and timing
+  result.success = true;
+
+  return result;
+}
+
+ble::Result DisconnectDevice(const std::string& mac_address) {
+  ble::Result result;
+  ScopedTimer timer(result.operation_time);
+
+  // Validate MAC address format
+  if (!IsValidMacAddress(mac_address)) {
+    result = MakeErrorResult(ble::ErrorCode::DeviceNotFound, "Invalid MAC address format");
+    return result;
+  }
+
+  GError* error = nullptr;
+
+  // Connect to system D-Bus
+  GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
+  if (!connection) {
+    result =
+        MakeErrorResult(ble::ErrorCode::DBusConnectionFailed, error ? error->message : "Failed to connect to D-Bus");
+    if (error) {
+      g_error_free(error);
+    }
+    return result;
+  }
+
+  // RAII wrapper for connection
+  auto connection_wrapper = GObjectWrapper::make_dbus_connection(connection);
+
+  // Convert MAC address to D-Bus object path
+  std::string device_path = MacToObjectPath(mac_address);
+
+  // Create proxy for the specific device
+  GDBusProxy* device_proxy =
+      g_dbus_proxy_new_sync(connection_wrapper.get(), G_DBUS_PROXY_FLAGS_NONE, nullptr, "org.bluez",
+                            device_path.c_str(), "org.bluez.Device1", nullptr, &error);
+
+  if (!device_proxy) {
+    result =
+        MakeErrorResult(ble::ErrorCode::DeviceNotFound, error ? error->message : "Device not found or not accessible");
+    if (error) g_error_free(error);
+    return result;
+  }
+
+  // RAII wrapper for device proxy
+  auto device_proxy_wrapper = GObjectWrapper::make_dbus_proxy(device_proxy);
+
+  // Call Disconnect method
+  GVariant* disconnect_result =
+      g_dbus_proxy_call_sync(device_proxy_wrapper.get(), "Disconnect", g_variant_new("()"), G_DBUS_CALL_FLAGS_NONE,
+                             10000,  // 10 second timeout for disconnect
+                             nullptr, &error);
+
+  if (!disconnect_result) {
+    result = MakeErrorResult(ble::ErrorCode::DisconnectFailed, error ? error->message : "Disconnect operation failed");
+    if (error) g_error_free(error);
+    return result;
+  }
+
+  // Clean up disconnect result
+  g_variant_unref(disconnect_result);
+
+  // Set success and timing
+  result.success = true;
+
+  return result;
 }
 
 }  // namespace ble
