@@ -487,7 +487,7 @@ ble::Result ConnectDevice(const std::string& mac_address, int timeout_seconds) {
   return result;
 }
 
-ble::Result DisconnectDevice(const std::string& mac_address) {
+ble::Result DisconnectDevice(const std::string& mac_address, int timeout_seconds) {
   ble::Result result;
   ScopedTimer timer(result.operation_time);
 
@@ -532,10 +532,8 @@ ble::Result DisconnectDevice(const std::string& mac_address) {
   auto device_proxy_wrapper = GObjectWrapper::make_dbus_proxy(device_proxy);
 
   // Call Disconnect method
-  GVariant* disconnect_result =
-      g_dbus_proxy_call_sync(device_proxy_wrapper.get(), "Disconnect", g_variant_new("()"), G_DBUS_CALL_FLAGS_NONE,
-                             10000,  // 10 second timeout for disconnect
-                             nullptr, &error);
+  GVariant* disconnect_result = g_dbus_proxy_call_sync(device_proxy_wrapper.get(), "Disconnect", g_variant_new("()"),
+                                                       G_DBUS_CALL_FLAGS_NONE, timeout_seconds * 1000, nullptr, &error);
 
   if (!disconnect_result) {
     result = MakeErrorResult(ble::ErrorCode::DisconnectFailed, error ? error->message : "Disconnect operation failed");

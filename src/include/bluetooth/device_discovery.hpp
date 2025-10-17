@@ -78,7 +78,7 @@ Result PairDevice(const std::string& mac_address, int timeout_seconds = 30);
 
 Result ConnectDevice(const std::string& mac_address, int timeout_seconds = 30);
 
-Result DisconnectDevice(const std::string& mac_address);
+Result DisconnectDevice(const std::string& mac_address, int timeout_seconds = 10);
 
 // Error code utility function
 std::string ErrorCodeToMessage(ErrorCode code);
