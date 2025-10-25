@@ -34,6 +34,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/include)
 # Build shared library
 add_library(ble SHARED
     src/lib/bluetooth/device_discovery.cpp
+    src/lib/bluetooth/advertising.cpp
 )
 
 target_link_libraries(ble ${GIO_LIBRARIES} ${DBUS_LIBRARIES})
@@ -44,7 +45,7 @@ target_include_directories(ble PUBLIC ${GIO_INCLUDE_DIRS} ${DBUS_INCLUDE_DIRS})
 set_target_properties(ble PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
-    PUBLIC_HEADER "src/include/bluetooth/device_discovery.hpp"
+    PUBLIC_HEADER "src/include/bluetooth/device_discovery.hpp;src/include/bluetooth/advertising.hpp"
 )
 
 # Build CLI executables
@@ -54,18 +55,17 @@ target_link_libraries(ble_pair ble)
 add_executable(ble_conn src/cli/ble_conn.cpp)
 target_link_libraries(ble_conn ble)
 
+add_executable(ble_ad src/cli/ble_ad.cpp)
+target_link_libraries(ble_ad ble)
+
 # Installation
 install(TARGETS ble DESTINATION lib)
-install(TARGETS ble_pair ble_conn DESTINATION bin)
-install(FILES src/include/bluetooth/device_discovery.hpp DESTINATION include/bluetooth)
+install(TARGETS ble_pair ble_conn ble_ad DESTINATION bin)
+install(FILES
+    src/include/bluetooth/device_discovery.hpp
+    src/include/bluetooth/advertising.hpp
+    DESTINATION include/bluetooth)
 
-# Testing (optional)
-option(BUILD_TESTING "Build tests" OFF)
-
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
 
 # CPPLint
 find_program(CPPLINT cpplint)
@@ -102,8 +102,11 @@ if(CLANG_FORMAT)
     set(ALL_SOURCE_FILES
         "${CMAKE_SOURCE_DIR}/src/cli/ble_pair.cpp"
         "${CMAKE_SOURCE_DIR}/src/cli/ble_conn.cpp"
+        "${CMAKE_SOURCE_DIR}/src/cli/ble_ad.cpp"
         "${CMAKE_SOURCE_DIR}/src/include/bluetooth/device_discovery.hpp"
+        "${CMAKE_SOURCE_DIR}/src/include/bluetooth/advertising.hpp"
         "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/device_discovery.cpp"
+        "${CMAKE_SOURCE_DIR}/src/lib/bluetooth/advertising.cpp"
     )
 
     add_custom_target(format
